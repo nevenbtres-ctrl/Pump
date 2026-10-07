@@ -49,11 +49,19 @@ body{
   border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;
   display:flex;align-items:center;gap:5px;
 }
-.hdr .badge .dot{
-  width:8px;height:8px;border-radius:50%;background:#ef4444;
-  transition:.3s;
+.sync-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;padding:3px 10px;
+  font-size:10.5px;font-weight:700;
 }
-.hdr .badge.online .dot{background:#10b981;box-shadow:0 0 8px #10b981}
+.sync-badge .dot{
+  width:7px;height:7px;border-radius:50%;background:#ef4444;
+  animation:pulse 1.5s infinite;
+}
+.sync-badge.online .dot{background:#10b981}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .nav{
   display:flex;gap:5px;padding:8px;overflow-x:auto;
   background:#fff;border-bottom:1px solid #e2e8f0;
@@ -317,24 +325,71 @@ body{
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.err{border-right-color:#ef4444}
 .toast.ok{border-right-color:#10b981}
-.sync-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.25);
-  border-radius:999px;padding:3px 10px;
-  font-size:10.5px;font-weight:700;
-}
-.sync-badge .dot{
-  width:7px;height:7px;border-radius:50%;background:#ef4444;
-  animation:pulse 1.5s infinite;
-}
-.sync-badge.online .dot{background:#10b981}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .legend{
   display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
   margin-top:8px;font-size:10.5px;color:#64748b;font-weight:700;
 }
 .legend span{background:#f1f5f9;border-radius:20px;padding:3px 10px}
+
+/* ============================================================
+   ✅ إصلاح لون الأرقام عند التصوير
+   ============================================================ */
+.capture-mode,
+.capture-mode * {
+  font-family: 'Cairo', system-ui, sans-serif !important;
+  opacity: 1 !important;
+}
+.capture-mode input,
+.capture-mode input:disabled,
+.capture-mode input[readonly] {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  font-weight: 900 !important;
+}
+.capture-mode span,
+.capture-mode div,
+.capture-mode p,
+.capture-mode td,
+.capture-mode th,
+.capture-mode label {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  opacity: 1 !important;
+}
+/* الحفاظ على الألوان المميزة */
+.capture-mode .val[style*="#059669"],
+.capture-mode #whAvailM3,
+.capture-mode #whAvailB,
+.capture-mode #adTotalAvail,
+.capture-mode #stTotalX {
+  color: #047857 !important;
+  -webkit-text-fill-color: #047857 !important;
+}
+.capture-mode .val[style*="#b45309"],
+.capture-mode #whFreeM3,
+.capture-mode #whFreeB,
+.capture-mode #adTotalFree,
+.capture-mode #stTotalF {
+  color: #92400e !important;
+  -webkit-text-fill-color: #92400e !important;
+}
+.capture-mode .val[style*="#0284c7"],
+.capture-mode #stTotalV {
+  color: #0369a1 !important;
+  -webkit-text-fill-color: #0369a1 !important;
+}
+.capture-mode .val[style*="#7c3aed"],
+.capture-mode #stTotalR {
+  color: #6d28d9 !important;
+  -webkit-text-fill-color: #6d28d9 !important;
+}
+.capture-mode .val[style*="#92400e"],
+.capture-mode #whStok {
+  color: #92400e !important;
+  -webkit-text-fill-color: #92400e !important;
+}
 </style>
 </head>
 <body>
@@ -751,7 +806,6 @@ const Archive = {
     }
     if(arr.length > MAX_ARCHIVE) arr.length = MAX_ARCHIVE;
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e){}
-    // Firebase
     if(db && isOnline){
       db.ref('tuba_archive/' + section + '/' + entry.id).set(entry)
         .catch(err => console.warn('Firebase save error:', err));
@@ -963,33 +1017,92 @@ function loadArchiveEntry(section, id){
   toast('تم الاسترجاع', 'ok');
   switchSection(section);
 }
+
+/* ============================================================
+   ✅ دوال مساعدة لإصلاح الخطوط العربية في html2canvas
+   ============================================================ */
+async function ensureFontsLoaded(){
+  if(!document.fonts) return;
+  try{
+    await Promise.all([
+      document.fonts.load('400 16px Cairo'),
+      document.fonts.load('600 16px Cairo'),
+      document.fonts.load('700 16px Cairo'),
+      document.fonts.load('800 16px Cairo'),
+      document.fonts.load('900 16px Cairo')
+    ]);
+    await document.fonts.ready;
+  }catch(e){ console.warn('Font load error:', e); }
+}
+
+/* ============================================================
+   ✅ حفظ صورة أرشيف بإصلاحات كاملة
+   ============================================================ */
 async function downloadArchiveImage(section, id){
   const entry = Archive.get(section).find(e => e.id === id);
   if(!entry) return;
+
+  await ensureFontsLoaded();
+  await new Promise(r => setTimeout(r, 300));
+
   const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;left:-99999px;top:0;width:640px;background:#fff;padding:24px;font-family:Cairo,sans-serif;direction:rtl;color:#0f172a';
+  tmp.className = 'capture-mode';
+  tmp.style.cssText = "position:fixed;left:-99999px;top:0;width:640px;background:#fff;padding:24px;font-family:'Cairo',system-ui,sans-serif;direction:rtl;color:#000000";
   const dt = new Date(entry.timestamp);
   tmp.innerHTML = `
     <div style="text-align:center;padding-bottom:12px;border-bottom:3px solid #0f4c75;margin-bottom:14px">
       <div style="font-size:22px;font-weight:900;color:#0f4c75">⚙️ أتمتة الطوبة</div>
-      <div style="font-size:13px;color:#64748b;font-weight:700">أرشيف ${sectionLabels[section]||section}</div>
-      <div style="font-size:12px;color:#64748b;margin-top:4px">${dt.toLocaleString('ar-EG')}</div>
+      <div style="font-size:13px;color:#334155;font-weight:800">أرشيف ${sectionLabels[section]||section}</div>
+      <div style="font-size:12px;color:#475569;margin-top:4px;font-weight:800">${dt.toLocaleString('ar-EG')}</div>
     </div>
-    <div style="font-size:13px;line-height:1.9;font-weight:700">${summarizeEntry(section, entry.data)}</div>
-    <div style="margin-top:20px;text-align:center;color:#b45309;font-size:13px;font-weight:900;border-top:1px solid #e2e8f0;padding-top:10px;letter-spacing:.5px">
+    <div style="font-size:14px;line-height:1.9;font-weight:900;color:#000000">${summarizeEntry(section, entry.data)}</div>
+    <div style="margin-top:20px;text-align:center;color:#b45309;font-size:14px;font-weight:900;border-top:1px solid #cbd5e1;padding-top:10px;letter-spacing:.5px">
       Designed and programmed by Osama
     </div>`;
+
   document.body.appendChild(tmp);
+  await new Promise(r => setTimeout(r, 200));
+
   try{
-    const canvas = await html2canvas(tmp, { scale:2, backgroundColor:'#fff' });
+    const canvas = await html2canvas(tmp, {
+      scale: 3,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      letterRendering: true,
+      onclone: (clonedDoc) => {
+        clonedDoc.querySelectorAll('*').forEach(el => {
+          el.style.fontFamily = "'Cairo', system-ui, sans-serif";
+          el.style.opacity = '1';
+          const st = window.getComputedStyle(el);
+          // إصلاح الألوان الرمادية: إذا كان اللون رمادي، اجعله أسود
+          const m = st.color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+          if(m){
+            const [r,g,b] = [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+            const isGray = Math.abs(r-g) < 20 && Math.abs(g-b) < 20;
+            const isLight = (r+g+b)/3 > 60;
+            // إذا كان رمادي فاتح، اجعله أسود (إلا العناصر الملونة)
+            if(isGray && isLight && r < 180 && r > 60){
+              el.style.color = '#000000';
+              el.style.webkitTextFillColor = '#000000';
+            }
+          }
+        });
+      }
+    });
     const link = document.createElement('a');
     link.download = `archive_${section}_${id}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
     toast('تم تنزيل الصورة', 'ok');
-  }catch(e){ toast('خطأ في الإنشاء', 'err'); }
+  }catch(e){
+    console.error(e);
+    toast('خطأ في الإنشاء', 'err');
+  }
   document.body.removeChild(tmp);
 }
+
 $('arSection').addEventListener('change', () => refreshArchive());
 $('arYear').addEventListener('change', renderArchiveList);
 $('arMonth').addEventListener('change', renderArchiveList);
@@ -1007,25 +1120,44 @@ $('arExport').addEventListener('click', async () => {
   const section = $('arSection').value;
   const all = Archive.get(section);
   if(!all.length){ toast('لا يوجد أرشيف', 'err'); return; }
+
+  await ensureFontsLoaded();
+  await new Promise(r => setTimeout(r, 300));
+
   const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;left:-99999px;top:0;width:720px;background:#fff;padding:24px;font-family:Cairo,sans-serif;direction:rtl;color:#0f172a';
+  tmp.className = 'capture-mode';
+  tmp.style.cssText = "position:fixed;left:-99999px;top:0;width:720px;background:#fff;padding:24px;font-family:'Cairo',system-ui,sans-serif;direction:rtl;color:#000000";
   let html = `<div style="text-align:center;padding-bottom:14px;border-bottom:3px solid #0f4c75;margin-bottom:16px">
       <div style="font-size:24px;font-weight:900;color:#0f4c75">⚙️ أتمتة الطوبة</div>
-      <div style="font-size:14px;color:#64748b;font-weight:700;margin-top:4px">أرشيف ${sectionLabels[section]} - ${all.length} سجل</div>
+      <div style="font-size:14px;color:#334155;font-weight:800;margin-top:4px">أرشيف ${sectionLabels[section]} - ${all.length} سجل</div>
     </div>`;
   all.slice(0, 100).forEach((e, i) => {
     const dt = new Date(e.timestamp);
-    html += `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:8px;background:#f8fafc">
-        <div style="font-size:11px;color:#64748b;font-weight:700">#${i+1} — ${dt.toLocaleString('ar-EG')}</div>
-        <div style="font-size:12px;font-weight:700;margin-top:4px">${summarizeEntry(section, e.data)}</div>
+    html += `<div style="border:1px solid #cbd5e1;border-radius:8px;padding:10px;margin-bottom:8px;background:#f8fafc">
+        <div style="font-size:12px;color:#1e293b;font-weight:800">#${i+1} — ${dt.toLocaleString('ar-EG')}</div>
+        <div style="font-size:13px;font-weight:800;color:#000000;margin-top:4px">${summarizeEntry(section, e.data)}</div>
       </div>`;
   });
-  html += `<div style="margin-top:20px;text-align:center;color:#b45309;font-size:13px;font-weight:900;border-top:1px solid #e2e8f0;padding-top:10px;letter-spacing:.5px">Designed and programmed by Osama</div>`;
+  html += `<div style="margin-top:20px;text-align:center;color:#b45309;font-size:14px;font-weight:900;border-top:1px solid #cbd5e1;padding-top:10px;letter-spacing:.5px">Designed and programmed by Osama</div>`;
   tmp.innerHTML = html;
+
   document.body.appendChild(tmp);
+  await new Promise(r => setTimeout(r, 200));
+
   try{
     const { jsPDF } = window.jspdf;
-    const canvas = await html2canvas(tmp, { scale:2, backgroundColor:'#fff' });
+    const canvas = await html2canvas(tmp, {
+      scale: 3,
+      backgroundColor: '#fff',
+      useCORS: true,
+      letterRendering: true,
+      onclone: (clonedDoc) => {
+        clonedDoc.querySelectorAll('*').forEach(el => {
+          el.style.fontFamily = "'Cairo', system-ui, sans-serif";
+          el.style.opacity = '1';
+        });
+      }
+    });
     const pdf = new jsPDF('p','mm','a4');
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
@@ -1051,7 +1183,7 @@ $('arExport').addEventListener('click', async () => {
     }
     pdf.save(`archive_${section}_${Date.now()}.pdf`);
     toast('تم إنشاء PDF', 'ok');
-  }catch(e){ toast('خطأ في PDF', 'err'); }
+  }catch(e){ console.error(e); toast('خطأ في PDF', 'err'); }
   document.body.removeChild(tmp);
 });
 
@@ -1348,33 +1480,112 @@ $('labEval').addEventListener('click', () => {
 });
 
 /* ============================================================
-   Export: Image / PDF / WhatsApp
+   ✅ Export: Image / PDF / WhatsApp — مع إصلاحات كاملة
    ============================================================ */
 async function captureSection(sectionEl, name){
+  // 1) انتظر تحميل الخطوط من Google
+  await ensureFontsLoaded();
+  // 2) مهلة إضافية لضمان الرسم
+  await new Promise(r => setTimeout(r, 300));
+
   const clone = sectionEl.cloneNode(true);
   clone.querySelectorAll('.btnrow, .note, #adLogout').forEach(e => e.remove());
-  clone.querySelectorAll('input').forEach(i => { i.disabled = true; });
+
+  // 3) ✅ استبدال كل الحقول بعناصر span بلون أسود صريح
+  //    هذا يحل مشكلة الأرقام الرمادية تمامًا
+  clone.querySelectorAll('input').forEach(inp => {
+    const val = (inp.value || '').trim() || '0';
+    const span = document.createElement('span');
+    span.textContent = val;
+    // نسخ كلاسات وأنماط الحقل الأصلي
+    const inpClass = inp.className || '';
+    span.className = inpClass;
+    // أنماط داخلية صريحة بالأسود
+    span.style.cssText = `
+      display:block;
+      width:100%;
+      min-height:32px;
+      line-height:32px;
+      text-align:center;
+      font-weight:900;
+      font-size:15px;
+      color:#000000 !important;
+      -webkit-text-fill-color:#000000 !important;
+      background:#ffffff !important;
+      border:1.5px solid #94a3b8;
+      border-radius:7px;
+      font-family:'Cairo', system-ui, sans-serif !important;
+      padding:2px 4px;
+      box-sizing:border-box;
+      opacity:1 !important;
+    `;
+    inp.parentNode.replaceChild(span, inp);
+  });
+
+  // 4) بناء الـ wrapper بلون أسود افتراضي
   const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:fixed;left:-99999px;top:0;width:640px;background:#fff;padding:18px;font-family:Cairo,sans-serif;direction:rtl;color:#0f172a';
+  wrapper.className = 'capture-mode';
+  wrapper.style.cssText = "position:fixed;left:-99999px;top:0;width:640px;background:#ffffff;padding:18px;font-family:'Cairo',system-ui,sans-serif;direction:rtl;color:#000000";
   wrapper.innerHTML = `
     <div style="text-align:center;padding-bottom:12px;border-bottom:3px solid #0f4c75;margin-bottom:14px">
       <div style="font-size:22px;font-weight:900;color:#0f4c75">⚙️ أتمتة الطوبة</div>
-      <div style="font-size:12px;color:#64748b;font-weight:700;margin-top:3px">${new Date().toLocaleString('ar-EG')}</div>
+      <div style="font-size:12px;color:#1e293b;font-weight:800;margin-top:3px">${new Date().toLocaleString('ar-EG')}</div>
     </div>`;
   wrapper.appendChild(clone);
+
   const sig = document.createElement('div');
-  sig.style.cssText = 'margin-top:18px;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px';
+  sig.style.cssText = "margin-top:18px;text-align:center;border-top:1px solid #cbd5e1;padding-top:12px";
   sig.innerHTML = `
-    <div style="font-size:14px;font-weight:900;color:#b45309;letter-spacing:.8px">
+    <div style="font-size:15px;font-weight:900;color:#b45309;letter-spacing:.8px">
       Designed and programmed by Osama
     </div>
-    <div style="font-size:10px;color:#94a3b8;margin-top:4px;font-weight:700">
+    <div style="font-size:11px;color:#334155;margin-top:4px;font-weight:800">
       أسامة عبد العباس - أبو سجاد
     </div>`;
   wrapper.appendChild(sig);
+
   document.body.appendChild(wrapper);
+  await new Promise(r => setTimeout(r, 200));
+
   try{
-    const canvas = await html2canvas(wrapper, { scale:2, backgroundColor:'#fff' });
+    const canvas = await html2canvas(wrapper, {
+      scale: 3,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      letterRendering: true,
+      onclone: (clonedDoc) => {
+        // 5) ✅ إصلاح شامل للألوان والخطوط في النسخة المستنسخة
+        clonedDoc.querySelectorAll('*').forEach(el => {
+          el.style.fontFamily = "'Cairo', system-ui, sans-serif";
+          el.style.opacity = '1';
+          // إزالة أي شفافية
+          const st = window.getComputedStyle(el);
+          // إصلاح الألوان الرمادية للنصوص
+          const m = st.color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+          if(m){
+            const [r,g,b] = [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+            const isGray = Math.abs(r-g) < 25 && Math.abs(g-b) < 25;
+            const isLight = (r+g+b)/3 > 80 && (r+g+b)/3 < 220;
+            // إذا كان اللون رمادي متوسط/فاتح، اجعله أسود
+            if(isGray && isLight){
+              el.style.color = '#000000';
+              el.style.webkitTextFillColor = '#000000';
+            }
+          }
+        });
+        // فرض الأسود على الحقول المعدّلة
+        clonedDoc.querySelectorAll('input, input:disabled, input[readonly], span').forEach(inp => {
+          if(inp.tagName === 'INPUT'){
+            inp.style.color = '#000000';
+            inp.style.webkitTextFillColor = '#000000';
+            inp.style.background = '#ffffff';
+            inp.style.opacity = '1';
+          }
+        });
+      }
+    });
     document.body.removeChild(wrapper);
     return canvas;
   }catch(e){
@@ -1382,6 +1593,7 @@ async function captureSection(sectionEl, name){
     throw e;
   }
 }
+
 async function saveImage(sectionEl, name){
   try{
     toast('جارٍ إنشاء الصورة...', 'ok');
@@ -1404,7 +1616,7 @@ async function savePDF(sectionEl, name){
     const iw = pw - 16;
     const ih = canvas.height * iw / canvas.width;
     if(ih <= ph - 16){
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',8,8,iw,ih);
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',8,8,iw,ih);
     } else {
       const pageCanvas = document.createElement('canvas');
       const pctx = pageCanvas.getContext('2d');
@@ -1417,7 +1629,7 @@ async function savePDF(sectionEl, name){
         pctx.drawImage(canvas, 0, y, canvas.width, sh, 0, 0, canvas.width, sh);
         const sliceH = (sh / canvas.width) * iw;
         if(!first) pdf.addPage();
-        pdf.addImage(pageCanvas.toDataURL('image/jpeg',0.92),'JPEG',8,8,iw,sliceH);
+        pdf.addImage(pageCanvas.toDataURL('image/jpeg',0.95),'JPEG',8,8,iw,sliceH);
         y += sh; first = false;
       }
     }
@@ -1471,9 +1683,10 @@ labCalc();
 whUpdateAll();
 adUpdate();
 
-console.log('%c⚙️ أتمتة الطوبة v1.0', 'background:#0f4c75;color:#fff;font-weight:900;padding:10px 16px;border-radius:8px;font-size:15px');
+console.log('%c⚙️ أتمتة الطوبة v1.1', 'background:#0f4c75;color:#fff;font-weight:900;padding:10px 16px;border-radius:8px;font-size:15px');
 console.log('%c Designed and programmed by Osama ', 'background:#b45309;color:#fff;font-weight:900;padding:8px 16px;border-radius:6px;font-size:13px');
 console.log('%c Firebase: pump-5992f ', 'background:#10b981;color:#fff;font-weight:900;padding:6px 14px;border-radius:6px');
+console.log('%c ✅ v1.1: Fixed Arabic fonts + Black numbers', 'background:#22d3ee;color:#0f4c75;font-weight:900;padding:6px 14px;border-radius:6px');
 </script>
 </body>
 </html>
