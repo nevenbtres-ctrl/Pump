@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>تقرير مستودع الطوبة - Al-Tuba Oil Depot</title>
+<title>تقرير مخزن الطوبة - Al-Tuba Oil Depot</title>
 <style>
   :root{ --green:#25D366; --green-dark:#128C7E; }
   *{box-sizing:border-box; font-family:"Segoe UI",Tahoma,Arial,sans-serif;}
@@ -170,7 +170,7 @@
 
 <div class="card">
   <div class="head">
-    <h1>تقرير الإرسال — مستودع الطوبة</h1>
+    <h1>تقرير الإرسال — مخزن الطوبة</h1>
     <p>Al-Tuba Oil Depot</p>
   </div>
 
@@ -237,7 +237,7 @@
       <input id="pr" type="number" step="any" inputmode="decimal" placeholder="0">
     </div>
     <div class="grid row">
-      <label for="z1x">zub.1</label>
+      <label for="z1x">Z.1</label>
       <div class="tp-group">
         <input type="text" class="tp-input" id="tp-zub1-0" maxlength="2" data-row="zub1">
         <input type="text" class="tp-input" id="tp-zub1-1" maxlength="2" data-row="zub1">
@@ -254,7 +254,7 @@
       <input id="z1r" type="number" step="any" inputmode="decimal" placeholder="0">
     </div>
     <div class="grid row">
-      <label for="z2x">zub.2</label>
+      <label for="z2x">Z.2</label>
       <div class="tp-group">
         <input type="text" class="tp-input" id="tp-zub2-0" maxlength="2" data-row="zub2">
         <input type="text" class="tp-input" id="tp-zub2-1" maxlength="2" data-row="zub2">
@@ -560,8 +560,8 @@ function drawReport(){
   const items = [
     { name: 'Tuba',  avail: num('tx'),  free: num('tv'),  flow: num('tf'),  receive: num('tr'),  rowKey: 'tuba' },
     { name: 'PS.1',  avail: num('px'),  free: num('pv'),  flow: num('pf'),  receive: num('pr'),  rowKey: 'ps1' },
-    { name: 'zub.1', avail: num('z1x'), free: num('z1v'), flow: num('z1f'), receive: num('z1r'), rowKey: 'zub1' },
-    { name: 'zub.2', avail: num('z2x'), free: num('z2v'), flow: num('z2f'), receive: num('z2r'), rowKey: 'zub2' }
+    { name: 'Z.1',   avail: num('z1x'), free: num('z1v'), flow: num('z1f'), receive: num('z1r'), rowKey: 'zub1' },
+    { name: 'Z.2',   avail: num('z2x'), free: num('z2v'), flow: num('z2f'), receive: num('z2r'), rowKey: 'zub2' }
   ];
 
   items.forEach((item, i) => {
