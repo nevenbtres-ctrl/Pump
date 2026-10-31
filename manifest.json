@@ -1,7 +1,9 @@
 {
   "name": "تقرير مستودع الطوبة",
   "short_name": "الطوبة",
-  "start_url": ".",
+  "id": "/tuba-report-app-v2",
+  "start_url": "./?v=2",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#128C7E",
