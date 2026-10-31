@@ -2,8 +2,17 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>تقرير مخزن الطوبة - Al-Tuba Oil Depot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>تقرير مستودع الطوبة - Al-Tuba Oil Depot</title>
+
+<!-- إعدادات تطبيق الهاتف (PWA) -->
+<meta name="theme-color" content="#128C7E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="الطوبة">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+
 <style>
   :root{ --green:#25D366; --green-dark:#128C7E; }
   *{box-sizing:border-box; font-family:"Segoe UI",Tahoma,Arial,sans-serif;}
@@ -64,7 +73,7 @@
   .row label{font-weight:800; font-size:13.5px; color:#1e293b; direction:ltr; text-align:left;}
   .slash{text-align:center; color:#cbd5e1; font-weight:800;}
 
-  /* حقول T.P. - تستوعب حرفين */
+  /* حقول T.P. */
   .tp-group{display:flex; gap:4px; justify-content:center;}
   .tp-input{
     width:36px; height:26px; padding:0; border:1.5px solid #d6dde3; border-radius:6px;
@@ -150,7 +159,6 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
-  /* شاشات صغيرة */
   @media (max-width:500px){
     body{padding:10px;}
     .body{padding:14px 10px 18px;}
@@ -170,7 +178,7 @@
 
 <div class="card">
   <div class="head">
-    <h1>تقرير الإرسال — مخزن الطوبة</h1>
+    <h1>تقرير الإرسال — مستودع الطوبة</h1>
     <p>Al-Tuba Oil Depot</p>
   </div>
 
@@ -314,6 +322,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ============ تسجيل Service Worker ============ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('SW registered successfully'))
+    .catch(err => console.log('SW registration failed', err));
+}
+
 /* ============ العناصر والثوابت ============ */
 const $ = id => document.getElementById(id);
 
@@ -490,7 +505,7 @@ function drawReport(){
   ctx.fillText('T', W/2, 64);
   ctx.restore();
 
-  // العنوان الرئيسي فقط
+  // العنوان الرئيسي
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#ffffff';
@@ -589,7 +604,7 @@ function drawReport(){
     ctx.textBaseline = 'middle';
     ctx.fillText(item.name, colItem, ry + rowH/2);
 
-    // T.P. letters (حرفان لكل مربع)
+    // T.P. letters
     const letters = getTP(item.rowKey);
     const tpY = ry + rowH/2;
     const boxW = 38, boxH = 22;
@@ -721,7 +736,7 @@ function drawReport(){
   ctx.fillText('★', badgeX + 24, badgeY + badgeH/2 + 1);
   ctx.fillText('★', badgeX + badgeW - 24, badgeY + badgeH/2 + 1);
 
-  // النص الجديد
+  // النص
   ctx.fillStyle = '#ffffff';
   ctx.font = '900 18px "Segoe UI", Tahoma, Arial, sans-serif';
   ctx.textAlign = 'center';
@@ -770,8 +785,6 @@ document.querySelectorAll('.tp-input').forEach(el => {
 document.querySelectorAll('.arrow-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     const row = this.dataset.row;
-    const dir = this.dataset.dir;
-    // إلغاء تنشيط السهم الآخر في نفس الصف
     document.querySelectorAll(`.arrow-btn[data-row="${row}"]`).forEach(b => {
       if (b !== this) b.classList.remove('active');
     });
