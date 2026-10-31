@@ -42,6 +42,24 @@
 
   .body{padding:16px 18px 20px;}
 
+  /* زر التثبيت المخصص */
+  #installAppBtn {
+    display: none;
+    background: linear-gradient(135deg, #0f5132, #25D366);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(37,211,102,.3);
+    transition: .2s;
+  }
+  #installAppBtn:active { transform: scale(.97); }
+
   .clockbox{
     display:grid; grid-template-columns:1fr 1fr auto; gap:8px;
     align-items:end; margin-bottom:14px;
@@ -73,7 +91,6 @@
   .row label{font-weight:800; font-size:13.5px; color:#1e293b; direction:ltr; text-align:left;}
   .slash{text-align:center; color:#cbd5e1; font-weight:800;}
 
-  /* حقول T.P. */
   .tp-group{display:flex; gap:4px; justify-content:center;}
   .tp-input{
     width:36px; height:26px; padding:0; border:1.5px solid #d6dde3; border-radius:6px;
@@ -82,7 +99,6 @@
   }
   .tp-input:focus{border-color:var(--green); box-shadow:0 0 0 3px rgba(37,211,102,.18);}
 
-  /* أزرار الأسهم */
   .arrow-group{display:flex; gap:4px; justify-content:center;}
   .arrow-btn{
     width:28px; height:28px; border:none; border-radius:6px; background:#f1f5f9;
@@ -183,6 +199,9 @@
   </div>
 
   <div class="body">
+    
+    <!-- زر التثبيت الإجباري (يظهر فقط إذا كان المتصفح يسمح بذلك) -->
+    <button id="installAppBtn">📲 تثبيت التطبيق على الهاتف</button>
 
     <!-- الوقت والتاريخ -->
     <div class="clockbox">
@@ -322,12 +341,56 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============ تسجيل Service Worker ============ */
+/* ============ مسح التثبيت القديم وإجبار المتصفح على التحديث ============ */
+// إلغاء تسجيل أي Service Worker قديم لتجاوز الكاش
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log('SW registered successfully'))
-    .catch(err => console.log('SW registration failed', err));
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister();
+      console.log('Old SW Unregistered');
+    }
+    // تسجيل نسخة جديدة
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('New SW Registered'))
+      .catch(err => console.log('SW registration failed', err));
+  });
 }
+
+/* ============ كود زر التثبيت المخصص ============ */
+let deferredPrompt;
+const installBtn = document.getElementById('installAppBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // منع المتصفح من إظهار الرسالة الافتراضية
+  e.preventDefault();
+  // حفظ الحدث لاستخدامه عند الضغط على الزر
+  deferredPrompt = e;
+  // إظهار زر التثبيت الخاص بنا
+  installBtn.style.display = 'block';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    // إظهار نافذة التثبيت
+    deferredPrompt.prompt();
+    // انتظار رد المستخدم
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      installBtn.style.display = 'none'; // إخفاء الزر بعد التثبيت
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    // مسح الحدث لأنه لا يمكن استخدامه مرتين
+    deferredPrompt = null;
+  }
+});
+
+window.addEventListener('appinstalled', (evt) => {
+  // إخفاء الزر عند نجاح التثبيت
+  installBtn.style.display = 'none';
+  toast('تم تثبيت التطبيق بنجاح ✓');
+});
 
 /* ============ العناصر والثوابت ============ */
 const $ = id => document.getElementById(id);
